@@ -1,0 +1,3 @@
+[submodule "external/robot-controller"]
+	path = external/robot-controller
+	url = git@github.com:brysonmacduff/Robot-Controller.git
