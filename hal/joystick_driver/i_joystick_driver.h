@@ -15,7 +15,7 @@ struct JoystickState
     {
         std::stringstream output;
 
-        output << "{'x_axis': " << x_axis << ", 'y_axis': " << ", 'button': ";
+        output << "{'x_axis': " << x_axis << ", 'y_axis': " << y_axis << ", 'button': ";
 
         if(is_button_pressed)
         {
