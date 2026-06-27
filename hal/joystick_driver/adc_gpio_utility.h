@@ -6,7 +6,7 @@ namespace RobotRemoteController::Hal
 {
 
 // Only a subset of GPIO pins are capable of analog-to-digital conversion. They are defined by this enum.
-enum class AdcGpio
+enum class AdcGpio : uint8_t
 {
     GPIO_26 = 26,
     GPIO_27 = 27,

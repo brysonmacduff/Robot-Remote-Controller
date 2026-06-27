@@ -3,10 +3,17 @@
 namespace RobotRemoteController::Hal
 {
 
-JoystickDriverHw504::JoystickDriverHw504(AdcGpio x_axis_gpio, AdcGpio y_axis_gpio, AdcGpio button_gpio)
+JoystickDriverHw504::JoystickDriverHw504(AdcGpio x_axis_gpio, AdcGpio y_axis_gpio, uint8_t button_gpio)
 : m_x_axis_gpio(x_axis_gpio)
 , m_y_axis_gpio(y_axis_gpio)
 , m_button_gpio(button_gpio)
+{
+    m_is_button_enabled = true;
+}
+
+JoystickDriverHw504::JoystickDriverHw504(AdcGpio x_axis_gpio, AdcGpio y_axis_gpio)
+: m_x_axis_gpio(x_axis_gpio)
+, m_y_axis_gpio(y_axis_gpio)
 {
 }
 
@@ -22,6 +29,21 @@ const JoystickState& JoystickDriverHw504::Sample()
     SampleButton();
 
     return m_joystick_state;
+}
+
+void JoystickDriverHw504::InitializeGpioForSampling()
+{
+    adc_init();
+
+    adc_gpio_init(static_cast<uint8_t>(m_x_axis_gpio)); // x-axis
+    adc_gpio_init(static_cast<uint8_t>(m_y_axis_gpio)); // y-axis
+
+    if(m_is_button_enabled)
+    {
+        gpio_init(m_button_gpio); // button
+        gpio_set_dir(m_button_gpio, GPIO_IN);
+        gpio_pull_up(m_button_gpio);
+    }
 }
 
 float JoystickDriverHw504::SampleInputVoltage(AdcGpio gpio)
@@ -47,14 +69,18 @@ void JoystickDriverHw504::SampleAxisY()
 {
     const float input_voltage = SampleInputVoltage(m_y_axis_gpio);
 
-    m_joystick_state.y_axis = NormalizeVoltage(input_voltage);
+    // The y-axis normalized voltage must be reverse (multiple by -1) because the joystick's y-axis is backwards (-_-)
+    m_joystick_state.y_axis = NormalizeVoltage(input_voltage) * -1;
 }
 
 void JoystickDriverHw504::SampleButton()
 {
-    const float input_voltage = SampleInputVoltage(m_button_gpio);
+    if(not m_is_button_enabled)
+    {
+        return;
+    }
 
-    m_joystick_state.is_button_pressed = IsFloatEqual(input_voltage, VOLTAGE_HIGH, FLOAT_COMPARISON_TOLERANCE);
+    m_joystick_state.is_button_pressed = not gpio_get(m_button_gpio);
 }
 
 float JoystickDriverHw504::NormalizeVoltage(float voltage)

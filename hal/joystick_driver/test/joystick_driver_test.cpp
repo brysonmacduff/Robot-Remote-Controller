@@ -8,35 +8,37 @@
 
 using namespace RobotRemoteController::Hal;
 
-static constexpr std::chrono::milliseconds SLEEP_DURATION {50};
+static constexpr std::chrono::milliseconds SAMPLE_SLEEP_DURATION {50};
+static constexpr std::chrono::milliseconds USB_SETUP_SLEEP_DURATION { 2000 };
+static constexpr uint8_t BUTTON_GPIO = 22;
 
 int main()
 {
     if(not stdio_init_all())
     {
-        printf("Failed to initialize. Exiting.");
+        printf("Failed to initialize stdio.\n");
         return 1;
     }
 
-    sleep_ms(2000); // allow USB to enumerate
+    sleep_ms(USB_SETUP_SLEEP_DURATION.count()); // allow USB to enumerate
 
-    printf("Start of firmware...\n");
+    if(cyw43_arch_init() != 0)
+    {
+        printf("Failed to initialize cyw43.\n");
+        return 1;
+    }
 
-    cyw43_arch_init();
+    // Note: GPIO initialization and overall hardware initialize for driver software could be consolidated in ComponentManager
 
     cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, true);
 
-    printf("Initializing...\n");
+    printf("Initializing ADC and GPIO...\n");
 
-    adc_init();
+    JoystickDriverHw504 joystick_driver (AdcGpio::GPIO_26, AdcGpio::GPIO_27, BUTTON_GPIO);
 
-    adc_gpio_init(26); // x-axis
-    adc_gpio_init(27); // y-axis
-    adc_gpio_init(28); // button
+    joystick_driver.InitializeGpioForSampling();
 
     printf("Done initializing hardware...\n");
-
-    JoystickDriverHw504 joystick_driver (AdcGpio::GPIO_26,AdcGpio::GPIO_27,AdcGpio::GPIO_28);
 
     printf("Starting to sample joystick state...\n");
 
@@ -48,7 +50,7 @@ int main()
 
         printf(joystick_state_log.c_str());
 
-        sleep_ms(static_cast<uint32_t>(SLEEP_DURATION.count()));
+        sleep_ms(static_cast<uint32_t>(SAMPLE_SLEEP_DURATION.count()));
     }
 
     return 0;
