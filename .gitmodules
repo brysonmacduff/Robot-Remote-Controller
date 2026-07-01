@@ -4,3 +4,6 @@
 [submodule "external/MTP32"]
 	path = external/MTP32
 	url = git@github.com:brysonmacduff/MTP32.git
+[submodule "external/RF24"]
+	path = external/RF24
+	url = https://github.com/nRF24/RF24.git

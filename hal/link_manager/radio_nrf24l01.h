@@ -2,11 +2,11 @@
 #include "i_link_manager.h"
 
 #include <mtp32.h>
+#include <RF24.h>
 
 #include <cstdint>
 #include <chrono>
 #include <string_view>
-
 
 namespace RobotRemoteController::Hal
 {
@@ -66,6 +66,7 @@ private:
     MTP32::TransportManager m_transport_manager;
     uint64_t m_radio_pipe_address {0};
     bool m_is_radio_initialized { false };
+    RF24 m_radio;
 
     void HandleRxPacket(MTP32::Packet rx_packet);
     /**

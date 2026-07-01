@@ -11,6 +11,7 @@ RadioNrf24L01::RadioNrf24L01(uint8_t chip_enable_gpio, SpiOption spi_option, uin
     , [&]() { return RequestRadioRx(); }
     , [&](MTP32::Packet rx_packet) { HandleRxPacket(rx_packet); })
     )
+, m_radio(RF24(chip_enable_gpio, static_cast<uint8_t>(spi_option)))
 {
 }
 
@@ -32,6 +33,37 @@ void RadioNrf24L01::EnqueueTxPacket(const RobotMiddleware::Packet &packet)
 void RadioNrf24L01::SetRxPacketCallback(RxPacketCallback callback)
 {
     m_rx_packet_callback = std::move(callback);
+}
+
+bool RadioNrf24L01::InitializeRadio()
+{
+    if(IsRadioInitialized())
+    {
+        return true;
+    }
+
+    // Initialize the radio hardware
+
+    if (not m_radio.begin()) 
+    {
+        printf("{%s}::{%s}() -> Failed to initialize radio hardware. This is a fatal error.\n",CLASS_NAME,__func__);
+        return false;
+    }
+
+    // These could be made configurable but it is unclear at this time whether they should be.
+    m_radio.setPALevel(RF24_PA_LOW);
+    m_radio.setDataRate(RF24_1MBPS);
+
+    // Open pipes for both TX and RX
+    m_radio.openWritingPipe(m_radio_pipe_address);
+    m_radio.openReadingPipe(1, m_radio_pipe_address);
+
+    // Enter RX mode to start
+    m_radio.startListening();
+
+    m_is_radio_initialized = true;
+
+    return IsRadioInitialized();
 }
 
 void RadioNrf24L01::Run(std::chrono::steady_clock::time_point current_time)
