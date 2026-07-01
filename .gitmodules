@@ -1,3 +1,6 @@
 [submodule "external/robot-controller"]
 	path = external/robot-controller
 	url = git@github.com:brysonmacduff/Robot-Controller.git
+[submodule "external/MTP32"]
+	path = external/MTP32
+	url = git@github.com:brysonmacduff/MTP32.git
