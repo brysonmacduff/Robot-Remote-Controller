@@ -3,7 +3,7 @@
 namespace RobotRemoteController::Hal
 {
 
-RadioNrf24l01::RadioNrf24l01(uint8_t chip_enable_gpio, SpiOption spi_option, uint64_t radio_pipe_address, std::chrono::milliseconds radio_rx_timeout)
+RadioNrf24l01::RadioNrf24l01(uint8_t chip_enable_gpio, uint8_t chip_select_gpio, uint64_t radio_pipe_address, std::chrono::milliseconds radio_rx_timeout)
 : m_radio_pipe_address(radio_pipe_address)
 , m_radio_rx_timeout(radio_rx_timeout) 
 , m_transport_manager(MTP32::TransportManager(MTP32::Role::MASTER
@@ -11,7 +11,7 @@ RadioNrf24l01::RadioNrf24l01(uint8_t chip_enable_gpio, SpiOption spi_option, uin
     , [&]() { return RequestRadioRx(); }
     , [&](MTP32::Packet rx_packet) { HandleRxPacket(rx_packet); })
     )
-, m_radio(RF24(chip_enable_gpio, static_cast<uint8_t>(spi_option)))
+, m_radio(RF24(chip_enable_gpio, chip_select_gpio))
 {
 }
 

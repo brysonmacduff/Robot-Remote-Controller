@@ -16,19 +16,17 @@ namespace RobotRemoteController::Hal
 class RadioNrf24l01 : public ILinkManager
 {
 public:
-    // FIXME: CONFIRM THIS PIN ASSIGNMENT IS CORRECT LATER
-    static constexpr uint8_t DEFAULT_SPI_CE_GPIO = 22;
+    static constexpr uint8_t DEFAULT_SPI_CE_GPIO = 22; // pin 29
+    static constexpr uint8_t DEFAULT_SPI_CSN_GPIO = 21; // pin 27
     static constexpr uint64_t DEFAULT_RADIO_PIPE_ADDRESS = 0xE8E8F0F0E1LL;
 
-    enum class SpiOption : uint8_t
-    {
-        SPI_0 = 0,
-        SPI_1 = 1
-    };
-
     ~RadioNrf24l01() = default;
+    /**
+     * @brief Specifies the SPI pins that should the NRF24L01 radio expects to use.
+     * @warning The pico version of RF24 only uses SPI0.
+     */
     RadioNrf24l01(uint8_t chip_enable_gpio = DEFAULT_SPI_CE_GPIO, 
-        SpiOption spi_option = SpiOption::SPI_0,
+        uint8_t chip_select_gpio = DEFAULT_SPI_CSN_GPIO,
         uint64_t radio_pipe_address = DEFAULT_RADIO_PIPE_ADDRESS,
         std::chrono::milliseconds radio_rx_timeout = MTP32::TransportManager::RX_TIMEOUT
     );
