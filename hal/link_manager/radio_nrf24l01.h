@@ -13,7 +13,7 @@ namespace RobotRemoteController::Hal
 /**
  * @brief This class 
  */
-class RadioNrf24L01 : public ILinkManager
+class RadioNrf24l01 : public ILinkManager
 {
 public:
     // FIXME: CONFIRM THIS PIN ASSIGNMENT IS CORRECT LATER
@@ -26,8 +26,8 @@ public:
         SPI_1 = 1
     };
 
-    ~RadioNrf24L01() = default;
-    RadioNrf24L01(uint8_t chip_enable_gpio = DEFAULT_SPI_CE_GPIO, 
+    ~RadioNrf24l01() = default;
+    RadioNrf24l01(uint8_t chip_enable_gpio = DEFAULT_SPI_CE_GPIO, 
         SpiOption spi_option = SpiOption::SPI_0,
         uint64_t radio_pipe_address = DEFAULT_RADIO_PIPE_ADDRESS,
         std::chrono::milliseconds radio_rx_timeout = MTP32::TransportManager::RX_TIMEOUT
@@ -68,12 +68,24 @@ private:
     bool m_is_radio_initialized { false };
     RF24 m_radio;
 
-    void HandleRxPacket(MTP32::Packet rx_packet);
+    /**
+     * @brief Called when a data packet is received by the radio.
+     * @note This function is called by MTP32::TransportManager after successfully receiving a Packet after calling RequestRadioRx.
+     */
+    void HandleRxPacket(MTP32::Packet mtp32_rx_packet);
+
     /**
     * @brief Polls the radio hardware to check if a packet was received.
+    * @note This function is called by MTP32::TransportManager when it wants to read from the radio.
     * @returns The packet if available, std::nullopt if not.
     */
     std::optional<MTP32::Packet> RequestRadioRx();
+
+    /**
+     * @brief Attempts to use the radio to send a packet.
+     * @warning Message delivery is not guaranteed.
+     * @note This function called by MTP32::TransportManager when it attempts to send a message.
+     */
     void RequestRadioTx(const MTP32::Packet& tx_packet_bytes);
 };
 } // namespace RobotRemoteController::Hal
