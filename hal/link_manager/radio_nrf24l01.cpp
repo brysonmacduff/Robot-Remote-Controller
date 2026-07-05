@@ -2,16 +2,17 @@
 
 namespace RobotRemoteController::Hal
 {
-
-RadioNrf24l01::RadioNrf24l01(uint8_t chip_enable_gpio, uint8_t chip_select_gpio, uint64_t radio_pipe_address, std::chrono::milliseconds radio_rx_timeout)
-: m_radio_pipe_address(radio_pipe_address)
+RadioNrf24l01::RadioNrf24l01(RF24& radio, uint8_t chip_enable_gpio, uint8_t chip_select_gpio, uint64_t radio_pipe_address, std::chrono::milliseconds radio_rx_timeout)
+: m_radio(radio)
+, m_chip_enable_gpio(chip_enable_gpio)
+, m_chip_select_gpio(chip_select_gpio)
+, m_radio_pipe_address(radio_pipe_address)
 , m_radio_rx_timeout(radio_rx_timeout) 
 , m_transport_manager(MTP32::TransportManager(MTP32::Role::MASTER
     , [&](MTP32::Packet tx_packet) { RequestRadioTx(tx_packet); }
     , [&]() { return RequestRadioRx(); }
     , [&](MTP32::Packet rx_packet) { HandleRxPacket(rx_packet); })
     )
-, m_radio(RF24(chip_enable_gpio, chip_select_gpio))
 {
 }
 
@@ -44,7 +45,7 @@ bool RadioNrf24l01::InitializeRadio()
 
     // Initialize the radio hardware
 
-    if (not m_radio.begin()) 
+    if (not m_radio.begin(m_chip_enable_gpio, m_chip_select_gpio)) 
     {
         printf("{%s}::{%s}() -> Failed to initialize radio hardware. This is a fatal error.\n",CLASS_NAME,__func__);
         return false;

@@ -17,15 +17,17 @@ class RadioNrf24l01 : public ILinkManager
 {
 public:
     static constexpr uint8_t DEFAULT_SPI_CE_GPIO = 22; // pin 29
-    static constexpr uint8_t DEFAULT_SPI_CSN_GPIO = 21; // pin 27
+    static constexpr uint8_t DEFAULT_SPI_CSN_GPIO = 17; // pin 27
     static constexpr uint64_t DEFAULT_RADIO_PIPE_ADDRESS = 0xE8E8F0F0E1LL;
 
     ~RadioNrf24l01() = default;
     /**
-     * @brief Specifies the SPI pins that should the NRF24L01 radio expects to use.
-     * @warning The pico version of RF24 only uses SPI0.
+     * @brief Specifies the configuration that the NRF24L01 radio will use.
+     * @note The pico version of RF24 only uses SPI0.
+     * @param radio The RF24 instance is reference-injected because instantiation as a member of this class will cause firmware issues.
      */
-    RadioNrf24l01(uint8_t chip_enable_gpio = DEFAULT_SPI_CE_GPIO, 
+    RadioNrf24l01(RF24& radio,
+        uint8_t chip_enable_gpio = DEFAULT_SPI_CE_GPIO, 
         uint8_t chip_select_gpio = DEFAULT_SPI_CSN_GPIO,
         uint64_t radio_pipe_address = DEFAULT_RADIO_PIPE_ADDRESS,
         std::chrono::milliseconds radio_rx_timeout = MTP32::TransportManager::RX_TIMEOUT
@@ -58,13 +60,15 @@ public:
     bool IsRadioInitialized() const { return m_is_radio_initialized; }
 
 private:
-    static constexpr std::string_view CLASS_NAME = "RadioNrf24L01";
+    static constexpr std::string_view CLASS_NAME = "RadioNrf24l01";
     RxPacketCallback m_rx_packet_callback;
     std::chrono::milliseconds m_radio_rx_timeout;
     MTP32::TransportManager m_transport_manager;
     uint64_t m_radio_pipe_address {0};
     bool m_is_radio_initialized { false };
-    RF24 m_radio;
+    uint8_t m_chip_enable_gpio { 0 };
+    uint8_t m_chip_select_gpio { 0 };
+    RF24& m_radio;
 
     /**
      * @brief Called when a data packet is received by the radio.
