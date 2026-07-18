@@ -56,6 +56,7 @@ target_link_libraries(RF24 PUBLIC
 )
 # ------------------------------------------------------------
 
+add_subdirectory(interfaces)
 add_subdirectory(link_manager)
 add_subdirectory(joystick_driver)
 add_subdirectory(component_manager)

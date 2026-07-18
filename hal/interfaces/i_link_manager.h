@@ -1,6 +1,5 @@
 #pragma once
-#include <remote_control_protocol.h>
-
+#include <robot_middleware/remote_control_protocol.h>
 #include <functional>
 
 namespace RobotRemoteController::Hal
