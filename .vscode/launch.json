@@ -1,0 +1,31 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Pico W Debug",
+      "device": "RP2040",
+      "type": "cortex-debug",
+      "request": "launch",
+      "servertype": "openocd",
+      "cwd": "${workspaceFolder}",
+      "executable": "${workspaceFolder}/hal/build/link_manager/test/link_manager.test.elf",
+      "gdbPath": "arm-none-eabi-gdb",
+      "configFiles": [
+        "interface/cmsis-dap.cfg",
+        "target/rp2040.cfg"
+      ],
+      "openOCDLaunchCommands": [
+        "transport select swd",
+        "adapter speed 4000"
+      ],
+      "searchDir": [
+        "/usr/local/share/openocd/scripts"
+      ],
+      //"runToEntryPoint": "main", // Initially breaks at main
+      "svdFile": "${workspaceFolder}/pico.svd",
+      "postResetCommands": [
+        "continue"
+      ]
+    }
+  ]
+}

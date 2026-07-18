@@ -19,6 +19,7 @@ public:
     static constexpr uint8_t DEFAULT_SPI_CE_GPIO = 22; // pin 29
     static constexpr uint8_t DEFAULT_SPI_CSN_GPIO = 17; // pin 27
     static constexpr uint64_t DEFAULT_RADIO_PIPE_ADDRESS = 0xE8E8F0F0E1LL;
+    static constexpr size_t DEFAULT_TX_BUFFER_SIZE = 1;
 
     ~RadioNrf24l01() = default;
     /**
@@ -58,6 +59,8 @@ public:
     void Run(std::chrono::steady_clock::time_point current_time);
 
     bool IsRadioInitialized() const { return m_is_radio_initialized; }
+
+    size_t GetTxMessageQueueCount() const { return m_transport_manager.GetPendingTxMessageCount(); }
 
 private:
     static constexpr std::string_view CLASS_NAME = "RadioNrf24l01";

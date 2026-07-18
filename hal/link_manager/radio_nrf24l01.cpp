@@ -11,7 +11,9 @@ RadioNrf24l01::RadioNrf24l01(RF24& radio, uint8_t chip_enable_gpio, uint8_t chip
 , m_transport_manager(MTP32::TransportManager(MTP32::Role::MASTER
     , [&](MTP32::Packet tx_packet) { RequestRadioTx(tx_packet); }
     , [&]() { return RequestRadioRx(); }
-    , [&](MTP32::Packet rx_packet) { HandleRxPacket(rx_packet); })
+    , [&](MTP32::Packet rx_packet) { HandleRxPacket(rx_packet); }
+    , radio_rx_timeout
+    )
     )
 {
 }
@@ -29,6 +31,8 @@ void RadioNrf24l01::EnqueueTxPacket(const RobotMiddleware::Packet &packet)
     memcpy(tx_packet_bytes.data(), &packet, MTP32::MAXIMUM_PACKET_SIZE);
 
     m_transport_manager.EnqueuePacket(tx_packet_bytes);
+    const size_t tx_queue_count = m_transport_manager.GetPendingTxMessageCount();
+    printf("tx message queue count: {%zu}\n", tx_queue_count);
 }
 
 void RadioNrf24l01::SetRxPacketCallback(RxPacketCallback callback)
@@ -108,4 +112,4 @@ void RadioNrf24l01::RequestRadioTx(const MTP32::Packet &tx_packet_bytes)
     m_radio.startListening(); // Enter RX mode
 }
 
-} // RobotRemoteController::Hal
+} // namespace RobotRemoteController::Hal
