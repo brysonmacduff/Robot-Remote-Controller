@@ -2,18 +2,30 @@
 
 namespace RobotRemoteController::Hal
 {
-RadioNrf24l01::RadioNrf24l01(RF24& radio, uint8_t chip_enable_gpio, uint8_t chip_select_gpio, uint64_t radio_pipe_address, std::chrono::milliseconds radio_rx_timeout)
+RadioNrf24l01::RadioNrf24l01(RF24& radio, 
+    uint8_t chip_enable_gpio, 
+    uint8_t chip_select_gpio,
+    uint64_t radio_pipe_address, 
+    uint8_t clock_gpio,
+    uint8_t mosi_gpio,
+    uint8_t miso_gpio,
+    uint spi_baud_rate_hertz,
+    std::chrono::milliseconds radio_rx_timeout
+)
 : m_radio(radio)
 , m_chip_enable_gpio(chip_enable_gpio)
 , m_chip_select_gpio(chip_select_gpio)
 , m_radio_pipe_address(radio_pipe_address)
+, m_clock_gpio(clock_gpio)
+, m_mosi_gpio(mosi_gpio)
+, m_miso_gpio(miso_gpio)
+, m_spi_baud_rate_hertz(spi_baud_rate_hertz)
 , m_radio_rx_timeout(radio_rx_timeout) 
 , m_transport_manager(MTP32::TransportManager(MTP32::Role::MASTER
     , [&](MTP32::Packet tx_packet) { RequestRadioTx(tx_packet); }
     , [&]() { return RequestRadioRx(); }
     , [&](MTP32::Packet rx_packet) { HandleRxPacket(rx_packet); }
-    , radio_rx_timeout
-    )
+    , radio_rx_timeout)
     )
 {
 }
@@ -46,6 +58,19 @@ bool RadioNrf24l01::InitializeRadio()
     {
         return true;
     }
+
+    // Initialize GPIOs for SPI communication with the NRF24L01 radio
+
+    spi_init(spi0, m_spi_baud_rate_hertz); // RF24 can only use SPI0 on the pico
+
+    gpio_set_function(m_clock_gpio, GPIO_FUNC_SPI);  // SCK
+    gpio_set_function(m_mosi_gpio, GPIO_FUNC_SPI);  // MOSI
+    gpio_set_function(m_miso_gpio, GPIO_FUNC_SPI);  // MISO
+
+    gpio_init(m_chip_enable_gpio); 
+    gpio_set_dir(m_chip_enable_gpio, GPIO_OUT);  // CE
+    gpio_init(m_chip_select_gpio); 
+    gpio_set_dir(m_chip_select_gpio, GPIO_OUT);  // CSN
 
     // Initialize the radio hardware
 

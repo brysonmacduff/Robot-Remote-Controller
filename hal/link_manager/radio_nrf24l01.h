@@ -11,13 +11,18 @@
 namespace RobotRemoteController::Hal
 {
 /**
- * @brief This class 
+ * @brief This class functions as the sole point of control over the RF communication link.
+ * @note In the context of MTP32 communication roles, this class assumes the role of "master".
  */
 class RadioNrf24l01 : public ILinkManager
 {
 public:
-    static constexpr uint8_t DEFAULT_SPI_CE_GPIO = 22; // pin 29
-    static constexpr uint8_t DEFAULT_SPI_CSN_GPIO = 17; // pin 27
+    static constexpr uint8_t DEFAULT_SPI_CE_GPIO = 22;
+    static constexpr uint8_t DEFAULT_SPI_CSN_GPIO = 17;
+    static constexpr uint8_t DEFAULT_SPI_CLK_GPIO = 2;
+    static constexpr uint8_t DEFAULT_SPI_MOSI_GPIO = 3;
+    static constexpr uint8_t DEFAULT_SPI_MISO_GPIO = 4;
+    static constexpr uint DEFAULT_SPI_BAUD_RATE_HERTZ = 8'000'000; // 8 MHz
     static constexpr uint64_t DEFAULT_RADIO_PIPE_ADDRESS = 0xE8E8F0F0E1LL;
     static constexpr size_t DEFAULT_TX_BUFFER_SIZE = 1;
 
@@ -25,12 +30,17 @@ public:
     /**
      * @brief Specifies the configuration that the NRF24L01 radio will use.
      * @note The pico version of RF24 only uses SPI0.
-     * @param radio The RF24 instance is reference-injected because instantiation as a member of this class will cause firmware issues.
+     * @param radio The RF24 instance is reference-injected because RF24 instantiation on the stack and I cannot decide yet
+     * whether this class should manage the static RF24 instance.
      */
     RadioNrf24l01(RF24& radio,
         uint8_t chip_enable_gpio = DEFAULT_SPI_CE_GPIO, 
         uint8_t chip_select_gpio = DEFAULT_SPI_CSN_GPIO,
         uint64_t radio_pipe_address = DEFAULT_RADIO_PIPE_ADDRESS,
+        uint8_t clock_gpio = DEFAULT_SPI_CLK_GPIO,
+        uint8_t mosi_gpio = DEFAULT_SPI_MOSI_GPIO,
+        uint8_t miso_gpio = DEFAULT_SPI_MISO_GPIO,
+        uint spi_baud_rate_hertz = DEFAULT_SPI_BAUD_RATE_HERTZ,
         std::chrono::milliseconds radio_rx_timeout = MTP32::TransportManager::RX_TIMEOUT
     );
 
@@ -45,7 +55,7 @@ public:
     void SetRxPacketCallback(RxPacketCallback callback) override;
 
      /**
-     * @brief Initializes the radio.
+     * @brief Initializes GPIO pins for SPI and starts the radio
      * @warning If the radio is not initialized, the TX packets will be dropped and no RX packets will be received.
      * @returns Whether the radio is initialized. 
      * @note Subsequent calls after a successful initialization will have no effect on the radio and just return true.
@@ -64,13 +74,17 @@ public:
 
 private:
     static constexpr std::string_view CLASS_NAME = "RadioNrf24l01";
-    RxPacketCallback m_rx_packet_callback;
+    RxPacketCallback m_rx_packet_callback = [](const RobotMiddleware::Packet& packet){ (void)packet;};
     std::chrono::milliseconds m_radio_rx_timeout;
     MTP32::TransportManager m_transport_manager;
     uint64_t m_radio_pipe_address {0};
     bool m_is_radio_initialized { false };
     uint8_t m_chip_enable_gpio { 0 };
     uint8_t m_chip_select_gpio { 0 };
+    uint8_t m_clock_gpio { 0 };
+    uint8_t m_mosi_gpio { 0 };
+    uint8_t m_miso_gpio { 0 };
+    uint m_spi_baud_rate_hertz { 0 };
     RF24& m_radio;
 
     /**
