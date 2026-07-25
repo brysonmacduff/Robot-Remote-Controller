@@ -7,7 +7,7 @@
 
 using namespace RobotRemoteController::Hal;
 
-constexpr uint32_t TASK_SCHEDULE_SLEEP_INTERVAL_MS = 50;
+constexpr uint32_t TASK_SCHEDULE_SLEEP_INTERVAL_MS = 25;
 constexpr uint32_t IO_INITIALIZATION_DELAY_MS = 3000;
 
 int main()
@@ -39,7 +39,7 @@ int main()
     {
         RobotMiddleware::Packet rx_packet_copy = rx_packet;
 
-        printf("RadioNrf24l01::RxCallback() -> RX: {%s}", rx_packet_copy.ToString().c_str());
+        printf("RadioNrf24l01::RxCallback() -> RX: {%s}\n", rx_packet_copy.ToString().c_str());
     });
 
     if(not link_manager.InitializeRadio())
@@ -49,24 +49,29 @@ int main()
     }
 
     RobotMiddleware::Packet packet {};
-    packet.payload[0] = 0xff; // Put something in the payload so none of the outbound packets look like NOPs
+    packet.payload[0] = 0xff; // Put something in the payload so none of the outbound packet payloads look empty
 
-    uint32_t monotonic_counter = 0;
-    std::chrono::steady_clock::time_point time_point_now (std::chrono::milliseconds{monotonic_counter});
+    uint8_t tx_counter = 0;
+    const uint8_t tx_counter_limit = 10;
+
+    std::chrono::steady_clock::time_point time_point_now = std::chrono::steady_clock::now();
 
     while(true)
     {
-        link_manager.EnqueueTxPacket(packet);
+        if(tx_counter >= tx_counter_limit)
+        {
+            link_manager.EnqueueTxPacket(packet);
+            ++packet.sequence_number;
+            tx_counter = 0;
+        }
+
+        ++tx_counter;
 
         sleep_ms(TASK_SCHEDULE_SLEEP_INTERVAL_MS);
 
-        monotonic_counter += TASK_SCHEDULE_SLEEP_INTERVAL_MS;
-
-        time_point_now = std::chrono::steady_clock::time_point {std::chrono::milliseconds{monotonic_counter}};
+        time_point_now = std::chrono::steady_clock::now();
 
         link_manager.Run(time_point_now);
-
-        ++packet.sequence_number;
     }
 
     return 0;

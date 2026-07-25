@@ -43,8 +43,6 @@ void RadioNrf24l01::EnqueueTxPacket(const RobotMiddleware::Packet &packet)
     memcpy(tx_packet_bytes.data(), &packet, MTP32::MAXIMUM_PACKET_SIZE);
 
     m_transport_manager.EnqueuePacket(tx_packet_bytes);
-    const size_t tx_queue_count = m_transport_manager.GetPendingTxMessageCount();
-    printf("tx message queue count: {%zu}\n", tx_queue_count);
 }
 
 void RadioNrf24l01::SetRxPacketCallback(RxPacketCallback callback)
@@ -118,10 +116,17 @@ void RadioNrf24l01::HandleRxPacket(MTP32::Packet mtp32_rx_packet)
 
 std::optional<MTP32::Packet> RadioNrf24l01::RequestRadioRx()
 {
-    if(not m_radio.available())
+    m_radio.ce(0);
+    //sleep_ms(1);
+    const bool is_radio_available = m_radio.available();
+
+    if(not is_radio_available)
     {
+        m_radio.ce(1);
         return std::nullopt;
     }
+
+    m_radio.ce(1);
 
     MTP32::Packet packet {};
 

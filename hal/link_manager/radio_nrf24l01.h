@@ -22,9 +22,8 @@ public:
     static constexpr uint8_t DEFAULT_SPI_CLK_GPIO = 2;
     static constexpr uint8_t DEFAULT_SPI_MOSI_GPIO = 3;
     static constexpr uint8_t DEFAULT_SPI_MISO_GPIO = 4;
-    static constexpr uint DEFAULT_SPI_BAUD_RATE_HERTZ = 8'000'000; // 8 MHz
+    static constexpr uint DEFAULT_SPI_BAUD_RATE_HERTZ = 4'000'000;
     static constexpr uint64_t DEFAULT_RADIO_PIPE_ADDRESS = 0xE8E8F0F0E1LL;
-    static constexpr size_t DEFAULT_TX_BUFFER_SIZE = 1;
 
     ~RadioNrf24l01() = default;
     /**

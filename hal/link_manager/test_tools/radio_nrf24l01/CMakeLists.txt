@@ -1,4 +1,4 @@
-set(TEST_TARGET ${COMPONENT}.tool)
+set(TEST_TARGET "radio_nrf24l01.tool")
 
 file(GLOB CPP_FILES "*.h" "*.cpp")
 
