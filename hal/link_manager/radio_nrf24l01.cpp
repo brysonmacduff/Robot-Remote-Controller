@@ -2,19 +2,35 @@
 
 namespace RobotRemoteController::Hal
 {
-
-RadioNrf24L01::RadioNrf24L01(uint8_t chip_enable_gpio, SpiOption spi_option, uint64_t radio_pipe_address, std::chrono::milliseconds radio_rx_timeout)
-: m_radio_pipe_address(radio_pipe_address)
+RadioNrf24l01::RadioNrf24l01(RF24& radio, 
+    uint8_t chip_enable_gpio, 
+    uint8_t chip_select_gpio,
+    uint64_t radio_pipe_address, 
+    uint8_t clock_gpio,
+    uint8_t mosi_gpio,
+    uint8_t miso_gpio,
+    uint spi_baud_rate_hertz,
+    std::chrono::milliseconds radio_rx_timeout
+)
+: m_radio(radio)
+, m_chip_enable_gpio(chip_enable_gpio)
+, m_chip_select_gpio(chip_select_gpio)
+, m_radio_pipe_address(radio_pipe_address)
+, m_clock_gpio(clock_gpio)
+, m_mosi_gpio(mosi_gpio)
+, m_miso_gpio(miso_gpio)
+, m_spi_baud_rate_hertz(spi_baud_rate_hertz)
 , m_radio_rx_timeout(radio_rx_timeout) 
 , m_transport_manager(MTP32::TransportManager(MTP32::Role::MASTER
     , [&](MTP32::Packet tx_packet) { RequestRadioTx(tx_packet); }
     , [&]() { return RequestRadioRx(); }
-    , [&](MTP32::Packet rx_packet) { HandleRxPacket(rx_packet); })
+    , [&](MTP32::Packet rx_packet) { HandleRxPacket(rx_packet); }
+    , radio_rx_timeout)
     )
 {
 }
 
-void RadioNrf24L01::EnqueueTxPacket(const RobotMiddleware::Packet &packet)
+void RadioNrf24l01::EnqueueTxPacket(const RobotMiddleware::Packet &packet)
 {
     if(not IsRadioInitialized())
     {   
@@ -29,12 +45,56 @@ void RadioNrf24L01::EnqueueTxPacket(const RobotMiddleware::Packet &packet)
     m_transport_manager.EnqueuePacket(tx_packet_bytes);
 }
 
-void RadioNrf24L01::SetRxPacketCallback(RxPacketCallback callback)
+void RadioNrf24l01::SetRxPacketCallback(RxPacketCallback callback)
 {
     m_rx_packet_callback = std::move(callback);
 }
 
-void RadioNrf24L01::Run(std::chrono::steady_clock::time_point current_time)
+bool RadioNrf24l01::InitializeRadio()
+{
+    if(IsRadioInitialized())
+    {
+        return true;
+    }
+
+    // Initialize GPIOs for SPI communication with the NRF24L01 radio
+
+    spi_init(spi0, m_spi_baud_rate_hertz); // RF24 can only use SPI0 on the pico
+
+    gpio_set_function(m_clock_gpio, GPIO_FUNC_SPI);  // SCK
+    gpio_set_function(m_mosi_gpio, GPIO_FUNC_SPI);  // MOSI
+    gpio_set_function(m_miso_gpio, GPIO_FUNC_SPI);  // MISO
+
+    gpio_init(m_chip_enable_gpio); 
+    gpio_set_dir(m_chip_enable_gpio, GPIO_OUT);  // CE
+    gpio_init(m_chip_select_gpio); 
+    gpio_set_dir(m_chip_select_gpio, GPIO_OUT);  // CSN
+
+    // Initialize the radio hardware
+
+    if (not m_radio.begin(m_chip_enable_gpio, m_chip_select_gpio)) 
+    {
+        printf("{%s}::{%s}() -> Failed to initialize radio hardware. This is a fatal error.\n",CLASS_NAME,__func__);
+        return false;
+    }
+
+    // These could be made configurable but it is unclear at this time whether they should be.
+    m_radio.setPALevel(RF24_PA_LOW);
+    m_radio.setDataRate(RF24_1MBPS);
+
+    // Open pipes for both TX and RX
+    m_radio.openWritingPipe(m_radio_pipe_address);
+    m_radio.openReadingPipe(1, m_radio_pipe_address);
+
+    // Enter RX mode to start
+    m_radio.startListening();
+
+    m_is_radio_initialized = true;
+
+    return IsRadioInitialized();
+}
+
+void RadioNrf24l01::Run(std::chrono::steady_clock::time_point current_time)
 {
     if(not IsRadioInitialized())
     {
@@ -45,22 +105,41 @@ void RadioNrf24L01::Run(std::chrono::steady_clock::time_point current_time)
     m_transport_manager.Run(current_time);
 }
 
-void RadioNrf24L01::HandleRxPacket(MTP32::Packet rx_packet)
+void RadioNrf24l01::HandleRxPacket(MTP32::Packet mtp32_rx_packet)
 {
-    (void)rx_packet;
-    // FIXME: Implement RX packet handler
+    RobotMiddleware::Packet rm_rx_packet {};
+
+    memcpy(&rm_rx_packet, mtp32_rx_packet.data(), sizeof(rm_rx_packet));
+    
+    m_rx_packet_callback(rm_rx_packet);
 }
 
-std::optional<MTP32::Packet> RadioNrf24L01::RequestRadioRx()
+std::optional<MTP32::Packet> RadioNrf24l01::RequestRadioRx()
 {
-    return std::optional<MTP32::Packet>();
-    // FIXME: Implment RX packet polling logic
+    m_radio.ce(0);
+    //sleep_ms(1);
+    const bool is_radio_available = m_radio.available();
+
+    if(not is_radio_available)
+    {
+        m_radio.ce(1);
+        return std::nullopt;
+    }
+
+    m_radio.ce(1);
+
+    MTP32::Packet packet {};
+
+    m_radio.read(packet.data(), packet.size());
+
+    return packet;
 }
 
-void RadioNrf24L01::RequestRadioTx(const MTP32::Packet &tx_packet_bytes)
+void RadioNrf24l01::RequestRadioTx(const MTP32::Packet &tx_packet_bytes)
 {
-    (void)tx_packet_bytes;
-    // FIXME: Implement packet TX sender
+    m_radio.stopListening(); // Enter TX mode
+    m_radio.write(tx_packet_bytes.data(), tx_packet_bytes.size());
+    m_radio.startListening(); // Enter RX mode
 }
 
-} // RobotRemoteController::Hal
+} // namespace RobotRemoteController::Hal
