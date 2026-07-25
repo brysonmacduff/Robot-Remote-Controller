@@ -1,4 +1,5 @@
 #include "radio_nrf24l01.h"
+#include "rf24_provider.h"
  
 #include <pico/stdlib.h>
 #include <pico/cyw43_arch.h>
@@ -12,8 +13,9 @@ constexpr uint32_t IO_INITIALIZATION_DELAY_MS = 3000;
 
 int main()
 {
-    // Must be static due to garbage pointer deletion bug in the RF24::begin() function
-    static RF24 rf24_radio;
+    Rf24Provider rf24_provider;
+
+    RF24& rf24_radio = rf24_provider.GetInstance();
 
     if(not stdio_init_all())
     {

@@ -29,8 +29,9 @@ public:
     /**
      * @brief Specifies the configuration that the NRF24L01 radio will use.
      * @note The pico version of RF24 only uses SPI0.
-     * @param radio The RF24 instance is reference-injected because RF24 instantiation on the stack and I cannot decide yet
-     * whether this class should manage the static RF24 instance.
+     * @param radio The RF24 instance is reference-injected because RF24 instantiation on a Pico is bug prone. Therefore, the 
+     * lifetime of an RF24 instance is managed externally to less painfully incorporate future updates to the RF24 library.
+     * @todo Consider refactoring this API if the RF24 library receives bug fix improvements for the Pico.
      */
     RadioNrf24l01(RF24& radio,
         uint8_t chip_enable_gpio = DEFAULT_SPI_CE_GPIO, 
