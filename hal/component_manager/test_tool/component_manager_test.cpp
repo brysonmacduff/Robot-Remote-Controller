@@ -18,6 +18,8 @@ int main(){
         return 1;
     }
 
+    cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, true);
+
     ComponentManager component_manager;
 
     if(not component_manager.StartTaskSchedule())

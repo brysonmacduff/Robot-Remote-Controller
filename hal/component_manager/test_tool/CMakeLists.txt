@@ -1,4 +1,4 @@
-set(TEST_TARGET ${COMPONENT}.test)
+set(TEST_TARGET ${COMPONENT}.tool)
 
 file(GLOB CPP_FILES "*.h" "*.cpp")
 

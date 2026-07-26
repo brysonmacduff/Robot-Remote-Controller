@@ -11,6 +11,9 @@ ComponentManager::ComponentManager()
 
 bool ComponentManager::StartTaskSchedule()
 {
+    constexpr std::chrono::milliseconds TASK_SCHEDULE_SLEEP_DURATION {10};
+    constexpr std::chrono::milliseconds LINK_MANAGER_TASK_SLEEP_DURATION {5};
+
     if(m_is_task_schedule_active)
     {
         return true;
@@ -27,11 +30,21 @@ bool ComponentManager::StartTaskSchedule()
 
     while(m_is_task_schedule_active)
     {
-        const auto current_time = std::chrono::steady_clock::now();
-
+        sleep_ms(TASK_SCHEDULE_SLEEP_DURATION.count());
+        
+        // Sample the joystick state
         m_joystick_driver.Sample();
+
+        // Let remote control agent dispatch the current joystick state as a motion command
         m_remote_control_agent.Run();
-        m_link_manager.Run(current_time);
+
+        // Run the Link Manager until it has finished broadcasting the outbound packets that were enqueued during this task schedule iteration
+        while(m_link_manager.GetTxMessageQueueCount() > 0)
+        {
+            auto current_time = std::chrono::steady_clock::now();
+            m_link_manager.Run(current_time);
+            sleep_ms(LINK_MANAGER_TASK_SLEEP_DURATION.count());
+        }
     }
 
     return m_is_task_schedule_active;
