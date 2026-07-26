@@ -23,6 +23,10 @@ set(RF24_DIR "../external/RF24")
 # It helps CMake know which MTP32 package to look for. That being: the pico-armv6m one.
 set(mtp32_DIR "../external/MTP32/lib/platforms/pico-armv6m/lib/cmake/mtp32")
 
+# ------------------------------------------------------------
+# Tell CMake where to find the Pico libraries build by this project for internal use only betwen app and hal
+# ------------------------------------------------------------
+
 list(APPEND CMAKE_PREFIX_PATH ${RM_PICO_PLATFORM_LIB_DIR})
 List(APPEND CMAKE_PREFIX_PATH ${MTP32_PICO_PLATFORM_LIB_DIR})
 
@@ -30,6 +34,8 @@ list(APPEND CMAKE_FIND_ROOT_PATH ${RM_PICO_PLATFORM_LIB_DIR})
 list(APPEND CMAKE_FIND_ROOT_PATH ${MTP32_PICO_PLATFORM_LIB_DIR})
 
 pico_sdk_init()
+
+# Find libraries that were built for the pico platform (or interface only)
 
 find_package(robot_middleware REQUIRED)
 find_package(mtp32 REQUIRED)
@@ -54,9 +60,13 @@ target_link_libraries(RF24 PUBLIC
     hardware_spi
     hardware_gpio
 )
+
 # ------------------------------------------------------------
 
+# Add HAL subdirectories
+
 add_subdirectory(interfaces)
+add_subdirectory(app)
 add_subdirectory(link_manager)
 add_subdirectory(joystick_driver)
 add_subdirectory(component_manager)
