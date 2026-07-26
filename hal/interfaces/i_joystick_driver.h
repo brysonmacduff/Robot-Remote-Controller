@@ -10,6 +10,8 @@ struct JoystickState
     float x_axis = 0;
     float y_axis = 0;
     bool is_button_pressed = false;
+    float axis_lower_bound;
+    float axis_upper_bound;
 
     std::string ToString() const
     {
