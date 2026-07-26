@@ -6,6 +6,7 @@ RemoteControlAgent::RemoteControlAgent(Hal::ILinkManager& link_manager, Hal::IJo
 : m_link_manager(link_manager)
 , m_joystick_driver(joystick_driver)
 {
+    SetRobotMiddlewareCallbacks();
 }
 
 void RemoteControlAgent::Run()
@@ -59,7 +60,7 @@ RM::MotionControlProtocol::MotionState RemoteControlAgent::ConvertJoystickStateT
     else
     {
         // If "x" is not zero, then calculate the angle from the positive x-axis to the vector formed by coordinate [x,y] and the origin
-        polar_angle_radians = std::asin(cartesian_y/cartesian_x);
+        polar_angle_radians = std::atan(cartesian_y/cartesian_x);
     }
 
     // If the joystick is resting mostly in the y-axis direction, then interpret this as a "translate forward" input command

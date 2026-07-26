@@ -9,6 +9,8 @@
 #include <chrono>
 #include <cmath>
 #include <numbers>
+#include <cstdio>
+#include <string_view>
 
 namespace RobotRemoteController::App
 {
@@ -35,6 +37,8 @@ public:
     void Run();
 
 private:
+    static constexpr std::string_view CLASS_NAME = "RemoteControlAgent";
+
     Hal::ILinkManager& m_link_manager;
     Hal::IJoystickDriver& m_joystick_driver;
 
