@@ -2,9 +2,6 @@ cmake_minimum_required(VERSION 3.13)
 
 project(app C CXX)
 
-# Install into this project's build directory
-set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}" CACHE PATH "" FORCE)
-
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
