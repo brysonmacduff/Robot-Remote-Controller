@@ -62,7 +62,7 @@ private:
     AdcGpio m_y_axis_gpio;
     uint8_t m_button_gpio {0};
     bool m_is_button_enabled { false };
-    JoystickState m_joystick_state { .x_axis = 0, .y_axis = 0, .is_button_pressed = false};
+    JoystickState m_joystick_state { .x_axis = 0, .y_axis = 0, .is_button_pressed = false, .axis_lower_bound = NORMALIZED_LOWER_BOUND, .axis_upper_bound = NORMALIZED_UPPER_BOUND };
 
     float SampleInputVoltage(AdcGpio gpio);
     void SampleAxisX();

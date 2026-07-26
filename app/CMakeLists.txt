@@ -7,7 +7,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(robot_middleware REQUIRED)
 find_package(GTest REQUIRED)
-find_package(spdlog REQUIRED)
 
 add_library(hal_interfaces INTERFACE)
 target_include_directories(hal_interfaces INTERFACE ../hal/interfaces)
