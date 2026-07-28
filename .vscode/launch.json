@@ -8,8 +8,7 @@
       "request": "launch",
       "servertype": "openocd",
       "cwd": "${workspaceFolder}",
-      //"executable": "${workspaceFolder}/hal/build/link_manager/test_tools/rf24/rf24.tool.elf",
-      "executable": "${workspaceFolder}/hal/build/link_manager/test_tools/radio_nrf24l01/radio_nrf24l01.tool.elf",
+      "executable": "${workspaceFolder}/hal/build/component_manager/test_tool/component_manager.tool.elf",
       "gdbPath": "arm-none-eabi-gdb",
       "configFiles": [
         "interface/cmsis-dap.cfg",
